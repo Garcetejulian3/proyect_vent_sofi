@@ -19,6 +19,7 @@ public class Ticket {
     private String codigoVerificacion;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 30)
     private EstadoTicket estadoTicket;
 
     @ManyToOne

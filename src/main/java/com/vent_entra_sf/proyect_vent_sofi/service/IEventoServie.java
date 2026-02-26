@@ -9,4 +9,5 @@ public interface IEventoServie {
     EventoResponseDTO findEvento(Long idEvento);
     List<EventoResponseDTO> allEventos();
     void createEvento(EventoCreateDTO dto);
+    void editEvento(Long idEvento,EventoCreateDTO dto);
 }

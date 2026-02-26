@@ -55,4 +55,17 @@ public class EventoService implements IEventoServie{
         eventoRepository.save(evento);
 
     }
+
+    @Override
+    public void editEvento(Long idEvento, EventoCreateDTO dto) {
+        Evento evento = eventoRepository.findById(idEvento)
+                .orElseThrow(() -> new RuntimeException("Evento no existente"));
+
+        evento.setNombre(dto.getNombre());
+        evento.setFecha(dto.getFecha());
+        evento.setLugar(dto.getLugar());
+        evento.setPrecio(dto.getPrecio());
+
+        eventoRepository.save(evento);
+    }
 }

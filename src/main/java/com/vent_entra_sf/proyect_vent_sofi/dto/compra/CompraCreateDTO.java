@@ -15,5 +15,5 @@ public class CompraCreateDTO {
     private String apellido;
     private String email;
     private Long eventoId;
-    private BigDecimal cantidadEntradas;
+    private Integer cantidadEntradas;
 }

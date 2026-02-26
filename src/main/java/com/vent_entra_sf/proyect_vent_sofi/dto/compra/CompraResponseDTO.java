@@ -22,4 +22,5 @@ public class CompraResponseDTO {
     private Long compraId;
     private String estado;
     private BigDecimal total;
+    private String checkoutUrl;
 }

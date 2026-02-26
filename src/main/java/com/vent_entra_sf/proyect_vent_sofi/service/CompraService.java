@@ -1,5 +1,6 @@
 package com.vent_entra_sf.proyect_vent_sofi.service;
 
+import com.mercadopago.exceptions.MPException;
 import com.vent_entra_sf.proyect_vent_sofi.dto.compra.CompraCreateDTO;
 import com.vent_entra_sf.proyect_vent_sofi.dto.compra.CompraResponseDTO;
 import com.vent_entra_sf.proyect_vent_sofi.model.*;
@@ -18,6 +19,9 @@ import java.util.UUID;
 @Service
 public class CompraService implements ICompraService{
     @Autowired
+    private MercadoPagoService mercadoPagoService;
+
+    @Autowired
     private EventoRepository eventoRepository;
 
     @Autowired
@@ -26,23 +30,35 @@ public class CompraService implements ICompraService{
     @Autowired
     private CompraRepository compraRepository;
 
-    /*@Override
+    @Override
     public List<CompraResponseDTO> allCompras() {
         List<Compra> compraList = compraRepository.findAll();
         List<CompraResponseDTO> dtoList = new ArrayList<>();
 
-        for(Compra compra:compraList){
+        for (Compra compra : compraList) {
+
             CompraResponseDTO dto = new CompraResponseDTO();
             dto.setCompraId(compra.getIdCompra());
-            dto.setEstado(compra.getEstadoCompra());
+            dto.setEstado(compra.getEstadoCompra().name());
+            dto.setTotal(compra.getTotal());
+
+            dtoList.add(dto);
         }
-        return List.of();
-    }*/
+
+        return dtoList;
+    }
 
     @Override
     public CompraResponseDTO findCompra(Long idCompra) {
+        Compra compra = compraRepository.findById(idCompra)
+                .orElseThrow(() -> new RuntimeException("Compra no encontrada"));
 
-        return null;
+        CompraResponseDTO dto = new CompraResponseDTO();
+        dto.setCompraId(compra.getIdCompra());
+        dto.setEstado(compra.getEstadoCompra().name());
+        dto.setTotal(compra.getTotal());
+
+        return dto;
     }
 
     @Override
@@ -64,10 +80,13 @@ public class CompraService implements ICompraService{
 
         // Genero los tickets
         List<Ticket> tickets = new ArrayList<>();
+
         for (int i=0; i < dto.getCantidadEntradas(); i++){
             Ticket ticket = new Ticket();
-            ticket.setCodigoVerificacion(UUID.randomUUID().toString());
-            ticket.setEstadoTicket(EstadoTicket.VALIDO);
+            ticket.setCodigoVerificacion(UUID.randomUUID().toString().substring(0, 8));
+
+            ticket.setEstadoTicket(EstadoTicket.PENDIENTE_PAGO);
+
             ticket.setEvento(evento);
             ticket.setCompra(compra);
 
@@ -77,11 +96,22 @@ public class CompraService implements ICompraService{
         compra.setTickets(tickets);
         // Guardar todo
         compraRepository.save(compra);
+
+        // Creo el checkoutUrl
+        //String checkoutUrl = mercadoPagoService.createPreferencia(compra);
+        String checkoutUrl ;
+        try {
+            checkoutUrl = mercadoPagoService.createPreferencia(compra);
+        }catch (Exception e){
+            throw new RuntimeException("Error al crear preferencia de mercado pago",e);
+        }
+
         // Respuesta DTO
         CompraResponseDTO response = new CompraResponseDTO();
         response.setCompraId(compra.getIdCompra());
         response.setEstado(compra.getEstadoCompra().name());
         response.setTotal(compra.getTotal());
+        response.setCheckoutUrl(checkoutUrl);
 
         return response;
     }
