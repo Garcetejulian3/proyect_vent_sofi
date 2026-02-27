@@ -1,14 +1,12 @@
-# Imagen base con Java
-FROM eclipse-temurin:17-jdk
-
-# Carpeta interna del contenedor
+# ---------- Build Stage ----------
+FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
+COPY . .
+RUN mvn clean package -DskipTests
 
-# Copiamos el jar generado
-COPY target/proyect_vent_sofi-0.0.1-SNAPSHOT.jar app.jar
-
-# Puerto que usará Render
+# ---------- Run Stage ----------
+FROM eclipse-temurin:17-jdk-alpine
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-
-# Comando de arranque
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java","-jar","app.jar"]
