@@ -31,6 +31,9 @@ public class MercadoPagoService {
                         .currencyId("ARS")
                         .build();
 
+
+
+
         // BACK URLS
         PreferenceBackUrlsRequest backUrls =
                 PreferenceBackUrlsRequest.builder()
@@ -47,12 +50,13 @@ public class MercadoPagoService {
                 // Clave del Sistema
                         .externalReference(compra.getIdCompra().toString())
 
-                        .notificationUrl("https://nonmodal-abandonable-vanesa.ngrok-free.dev/api/mp/webhook")
+                        .notificationUrl("https://nonmodal-abandonable-vanesa.ngrok-free.dev/api/pagos/webhook")
                         .build();
 
         PreferenceClient client = new PreferenceClient();
         Preference preference = client.create(preferenceRequest);
 
+        System.out.println(preference.getInitPoint());
         return preference.getInitPoint();
     }
 }

@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.UUID;
 
 
@@ -32,59 +33,87 @@ import java.util.UUID;
         private String mpToken;
 
     @PostMapping("/webhook")
-    public ResponseEntity<String> webhook(@RequestParam("data_id") String paymentId)
-            throws MPException, MPApiException {
+    public ResponseEntity<String> webhook(@RequestBody Map<String, Object> body) {
 
-        // 🔐 1️⃣ Autenticamos contra Mercado Pago
-        // Sin esto, no podemos consultar el pago
-        MercadoPagoConfig.setAccessToken(mpToken);
+        try {
 
-        // 📦 2️⃣ Creamos cliente de pagos
-        PaymentClient client = new PaymentClient();
+            // 1️⃣ Validar que venga el tipo
+            String type = (String) body.get("type");
+            if (type == null || !"payment".equals(type)) {
+                return ResponseEntity.ok("Evento ignorado");
+            }
 
-        // 🔎 3️⃣ Consultamos el pago REAL en Mercado Pago
-        // El webhook solo manda el ID → aquí buscamos los datos completos
-        Payment payment = client.get(Long.parseLong(paymentId));
+            // 2️⃣ Validar que venga data
+            Object dataObj = body.get("data");
+            if (!(dataObj instanceof Map)) {
+                return ResponseEntity.ok("Sin data válida");
+            }
 
-        // ✅ 4️⃣ Solo actuamos si el pago fue APROBADO
-        // Mercado Pago puede enviar estados como:
-        // pending / rejected / approved / cancelled
-        if ("approved".equals(payment.getStatus())) {
+            Map<String, Object> data = (Map<String, Object>) dataObj;
 
-            // 🧾 5️⃣ Obtenemos el ID de compra de NUESTRO sistema
-            // externalReference = dato que nosotros enviamos al crear la preferencia
+            Object idObj = data.get("id");
+            if (idObj == null) {
+                return ResponseEntity.ok("Sin payment id");
+            }
+
+            String paymentId = idObj.toString();
+
+            // 3️⃣ Autenticación Mercado Pago
+            MercadoPagoConfig.setAccessToken(mpToken);
+            PaymentClient client = new PaymentClient();
+
+            // 4️⃣ Obtener pago real
+            Payment payment = client.get(Long.parseLong(paymentId));
+
+            if (payment == null) {
+                return ResponseEntity.ok("Pago no encontrado");
+            }
+
+            // 5️⃣ Solo procesar si está aprobado
+            if (!"approved".equals(payment.getStatus())) {
+                return ResponseEntity.ok("Pago no aprobado");
+            }
+
+            // 6️⃣ Obtener ID de compra desde externalReference
+            if (payment.getExternalReference() == null) {
+                return ResponseEntity.ok("Sin referencia externa");
+            }
+
             Long compraId = Long.valueOf(payment.getExternalReference());
 
-            // 🔎 6️⃣ Buscamos la compra en la base de datos
             Compra compra = compraRepository.findById(compraId)
                     .orElseThrow(() -> new RuntimeException("Compra no encontrada"));
 
-            // 💰 7️⃣ Marcamos la compra como PAGADA
-            compra.setEstadoCompra(EstadoCompra.PAGADO);
-
-            // 🎟 8️⃣ Recorremos los tickets de esa compra
-            for (Ticket ticket : compra.getTickets()) {
-
-                // ✅ Ticket ahora es válido
-                ticket.setEstadoTicket(EstadoTicket.VALIDO);
-
-                // 🔑 9️⃣ Obtenemos el código YA generado
-                // 👉 NO se genera aquí
-                // 👉 NO se modifica aquí
-                String codigo = ticket.getCodigoVerificacion();
-
-                // 📧 🔟 Enviamos el código por correo
-                emailService.enviarCodigo(compra.getEmailComprador(), codigo);
+            // 7️⃣ Evitar reprocesar si ya está pagada
+            if (compra.getEstadoCompra() == EstadoCompra.PAGADO) {
+                return ResponseEntity.ok("Compra ya procesada");
             }
 
-            // 💾 11️⃣ Guardamos cambios en BD
+            // 8️⃣ Actualizar estados
+            compra.setEstadoCompra(EstadoCompra.PAGADO);
+
+            for (Ticket ticket : compra.getTickets()) {
+                ticket.setEstadoTicket(EstadoTicket.VALIDO);
+            }
+
+            // 9️⃣ Guardar primero en base de datos
             compraRepository.save(compra);
+
+            // 🔟 Enviar emails después de guardar
+            for (Ticket ticket : compra.getTickets()) {
+                emailService.enviarCodigo(
+                        compra.getEmailComprador(),
+                        ticket.getCodigoVerificacion()
+                );
+            }
+
+            return ResponseEntity.ok("OK");
+
+        } catch (Exception e) {
+            // ⚠️ Loguear el error en producción
+            e.printStackTrace();
+            return ResponseEntity.ok("Error controlado");
         }
-
-        // 👍 12️⃣ Respondemos OK a Mercado Pago
-        // Si no respondes OK → Mercado Pago reintenta
-        return ResponseEntity.ok("OK");
     }
-
 
     }
