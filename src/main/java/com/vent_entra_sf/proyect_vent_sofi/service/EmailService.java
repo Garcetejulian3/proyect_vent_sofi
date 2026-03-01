@@ -19,15 +19,10 @@ public class EmailService {
     @Value("${spring.mail.username}")
     private String emailFrom;
 
-    /**
-     * Envía el código de verificación por email
-     * Método asincrónico para no bloquear el webhook
-     */
+
     @Async
     public void enviarCodigo(String destino, String codigo) {
         try {
-            System.out.println("📧 Intentando enviar mail a: " + destino);
-            System.out.println("📧 Desde email: " + emailFrom);
 
             SimpleMailMessage mensaje = new SimpleMailMessage();
             mensaje.setFrom(emailFrom);  // ✅ CORRECTO: Usa el valor inyectado
@@ -38,10 +33,8 @@ public class EmailService {
 
             mailSender.send(mensaje);
 
-            System.out.println("✅ MAIL ENVIADO OK A: " + destino);
 
         } catch (Exception e) {
-            System.out.println("❌ ERROR EN ENVIO DE MAIL A: " + destino);
             e.printStackTrace();  // ✅ Imprime el error real completo
             throw new RuntimeException("Fallo al enviar correo a " + destino, e);
         }
