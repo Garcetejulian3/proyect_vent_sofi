@@ -15,15 +15,19 @@ public class EmailService {
     private JavaMailSender mailSender;
 
     public void enviarCodigo(String destino,String codigo){
+        System.out.println("Intentando enviar mail a: " + destino);
         SimpleMailMessage mensaje = new SimpleMailMessage();
+
         mensaje.setTo(destino);
         mensaje.setSubject("Código de verificación - Compra realizada");
+
         mensaje.setText(
                 "¡Gracias por tu compra!\n\n" +
                 "Tu código de verificación es: " + codigo + "\n\n" +
                 "Presentalo al ingresar al evento."
         );
         mailSender.send(mensaje);
+        System.out.println("MAIL ENVIADO OK");
     }
 
     public TicketResponseDTO mapToDTO(Ticket ticket){

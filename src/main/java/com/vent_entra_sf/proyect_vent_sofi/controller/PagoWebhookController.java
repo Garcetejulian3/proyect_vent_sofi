@@ -110,9 +110,10 @@ import java.util.UUID;
             return ResponseEntity.ok("OK");
 
         } catch (Exception e) {
-            // ⚠️ Loguear el error en producción
-            e.printStackTrace();
-            return ResponseEntity.ok("Error controlado");
+
+            System.out.println("ERROR REAL EN WEBHOOK");
+
+            return ResponseEntity.status(500).body("Error");
         }
     }
 
