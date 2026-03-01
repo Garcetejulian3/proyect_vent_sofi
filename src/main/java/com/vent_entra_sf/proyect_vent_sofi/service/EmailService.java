@@ -14,20 +14,24 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
-    public void enviarCodigo(String destino,String codigo){
-        System.out.println("Intentando enviar mail a: " + destino);
-        SimpleMailMessage mensaje = new SimpleMailMessage();
+    public void enviarCodigo(String destino, String codigo) {
+        try {
+            System.out.println("Intentando enviar mail a: " + destino);
 
-        mensaje.setTo(destino);
-        mensaje.setSubject("Código de verificación - Compra realizada");
+            SimpleMailMessage mensaje = new SimpleMailMessage();
+            mensaje.setFrom(System.getenv("EMAIL_USER")); // 👈 IMPORTANTE
+            mensaje.setTo(destino);
+            mensaje.setSubject("Código de verificación - Compra realizada");
+            mensaje.setText("Código: " + codigo);
 
-        mensaje.setText(
-                "¡Gracias por tu compra!\n\n" +
-                "Tu código de verificación es: " + codigo + "\n\n" +
-                "Presentalo al ingresar al evento."
-        );
-        mailSender.send(mensaje);
-        System.out.println("MAIL ENVIADO OK");
+            mailSender.send(mensaje);
+
+            System.out.println("MAIL ENVIADO OK");
+        } catch (Exception e) {
+            System.out.println("ERROR REAL EN ENVIO DE MAIL");
+            e.printStackTrace();
+            throw e; // 👈 forzamos que explote
+        }
     }
 
     public TicketResponseDTO mapToDTO(Ticket ticket){
