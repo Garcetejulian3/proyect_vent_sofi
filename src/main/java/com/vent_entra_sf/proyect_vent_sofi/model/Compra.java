@@ -21,6 +21,7 @@ public class Compra {
 
     private String nombreComprador;
     private String apellidoComprador;
+
     private String emailComprador;
 
     @Enumerated(EnumType.STRING)
