@@ -50,7 +50,7 @@ public class MercadoPagoService {
                 // Clave del Sistema
                         .externalReference(compra.getIdCompra().toString())
 
-                        .notificationUrl("https://proyect-vent-sofi.onrender.com/api/pagos/webhook")
+                        .notificationUrl("https://nonmodal-abandonable-vanesa.ngrok-free.dev/api/pagos/webhook")
                         .build();
 
         PreferenceClient client = new PreferenceClient();

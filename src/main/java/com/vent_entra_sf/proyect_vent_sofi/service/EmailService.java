@@ -25,7 +25,7 @@ public class EmailService {
         try {
 
             SimpleMailMessage mensaje = new SimpleMailMessage();
-            mensaje.setFrom(emailFrom);  // ✅ CORRECTO: Usa el valor inyectado
+            mensaje.setFrom("garcetejulian3@gmail.com");
             mensaje.setTo(destino);
             mensaje.setSubject("Código de verificación - Compra realizada");
             mensaje.setText("Tu código de verificación es: " + codigo + "\n\n" +
@@ -35,7 +35,7 @@ public class EmailService {
 
 
         } catch (Exception e) {
-            e.printStackTrace();  // ✅ Imprime el error real completo
+            e.printStackTrace();
             throw new RuntimeException("Fallo al enviar correo a " + destino, e);
         }
     }

@@ -112,7 +112,7 @@ public class PagoWebhookController {
                             ticket.getCodigoVerificacion()
                     );
                 } catch (Exception emailError) {
-                            ticket.getIdTicket());
+                    System.out.println("Error enviando correo para ticket: " + ticket.getIdTicket());
                     emailError.printStackTrace();
                 }
             }
